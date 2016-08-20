@@ -36,16 +36,13 @@ fn configure_serial<T: SerialPort>(port: &mut T) -> io::Result<()> {
         settings.set_stop_bits(serial::Stop1);
         Ok(())
     }));
-    
+
     try!(port.set_timeout(Duration::from_millis(100)));
 
     Ok(())
 }
 
 fn serial_read<T: SerialPort>(port: &mut T) -> io::Result<()> {  
-    //let mut buf = String::new();
-    //port.read_to_string(&mut buf);
-
     let mut buf: Vec<u8> = (0..32).collect();
     port.read(&mut buf[..]);
     let mut buf = String::from_utf8(buf).unwrap();
