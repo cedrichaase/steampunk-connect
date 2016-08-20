@@ -1,0 +1,9 @@
+[package]
+name = "steampunk-connect"
+version = "0.1.0"
+authors = ["Cedric Haase <cedric@sineband.de>"]
+
+[dependencies]
+serial = "0.3.4"
+log = "0.3.6"
+regex = "0.1.73"
