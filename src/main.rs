@@ -8,20 +8,31 @@ use std::io;
 use std::thread;
 use std::time::Duration;
 use std::path::Path;
+use std::process::Command;
+use std::process::Stdio;
 
 use serial::prelude::*;
 
 use regex::Regex;
 
-const KEY_VOLUME: String = String::from("volume");
+const KEY_VOLUME: &'static str = "volume";
+
+
+static mut VOL_PREV: u8 = 0;
+
+
+struct VolumePublisher {
+    volume: u8,
+}
+
 
 /**
  * Returns the regex for given key
  * (single numerical value)
  */
-fn regex_for_key(key: String) -> Regex {
+fn regex_for_key(key: &str) -> Regex {
   let mut re_str: String = format!("{}: {}", key, r"(\d+)");
-  let re = Regex::new(&re_str).unwrap();
+  Regex::new(&re_str).unwrap()
 }
 
 fn main() {
@@ -31,10 +42,7 @@ fn main() {
     configure_serial(&mut port).unwrap();
 
     loop {
-        match listen(&mut port) {
-            Err(_) => continue,
-            result => result.unwrap(),
-        };
+        listen(&mut port)
     }
 }
 
@@ -48,7 +56,7 @@ fn configure_serial<T: SerialPort>(port: &mut T) -> io::Result<()> {
         Ok(())
     }));
 
-    try!(port.set_timeout(Duration::from_millis(100)));
+    try!(port.set_timeout(Duration::from_millis(500)));
 
     Ok(())
 }
@@ -57,20 +65,29 @@ fn listen_volume(stream: &String) {
     let re = regex_for_key(KEY_VOLUME);
     for cap in re.captures_iter(&stream) {
         let vol: u8 = cap.at(1).unwrap_or("").parse().unwrap();
+        
+        unsafe {
+            if vol != VOL_PREV {
+                Command::new("amixer")
+                    .arg("set")
+                    .arg("Speaker")
+                    .arg(format!("{}%", vol))
+                    .stdout(Stdio::null())
+                    .spawn();
+                println!("setting volume: {}", vol);
 
-        // TODO: notify subscribers
-        println!("vol: {}", vol);
+                VOL_PREV = vol;
+            }
+        }
+
     }
 }
 
-fn serial_get<T: SerialPort>(port: &T) -> &String {
-    let mut buf: Vec<u8> = (0..32).collect();
-    port.read(&mut buf[..]);
-    &String::from_utf8(buf).unwrap();
-}
 
-fn listen<T: SerialPort>(port: &mut T) -> io::Result<()> {
-  let stream = serial_get(&port);
+fn listen<T: SerialPort>(port: &mut T) {
+    let mut stream: Vec<u8> = (0..32).collect();
+    port.read(&mut stream[..]);
+    let stream = String::from_utf8(stream).unwrap();
 
   // TODO: only listen when there are volume subscribers
   listen_volume(&stream);
