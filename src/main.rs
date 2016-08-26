@@ -35,6 +35,8 @@ fn main() {
     let mut port = serial::open(&Path::new("/dev/ttymxc3")).unwrap();
     configure_serial(&mut port).unwrap();
 
+    interact(&mut port);
+
     loop {
         listen(&mut port)
     }
@@ -87,14 +89,12 @@ fn listen<T: SerialPort>(port: &mut T) {
   listen_volume(&stream);
 }
 
-/*
 fn interact<T: SerialPort>(port: &mut T) -> io::Result<()> {
-    
     try!(port.write_all(b"\rsub serialout volume\r"));
+    try!(port.write_all(b"\rset led mode off\r"));
     try!(port.flush());
 
     thread::sleep(Duration::from_millis(100));
 
     Ok(())
 }
-*/
