@@ -61,7 +61,7 @@ fn listen_volume(stream: &String) {
     let re = regex_for_key(KEY_VOLUME);
     for cap in re.captures_iter(&stream) {
         let vol: u8 = cap.at(1).unwrap_or("").parse().unwrap();
-        
+
         unsafe {
             if vol != VOL_PREV {
                 Command::new("amixer")
