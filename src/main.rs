@@ -20,12 +20,6 @@ const KEY_VOLUME: &'static str = "volume";
 
 static mut VOL_PREV: u8 = 0;
 
-
-struct VolumePublisher {
-    volume: u8,
-}
-
-
 /**
  * Returns the regex for given key
  * (single numerical value)
